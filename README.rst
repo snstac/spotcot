@@ -1,7 +1,7 @@
 spotcot - Spot Cursor-on-Target Gateway.
 ****************************************
 
-.. image:: docs/sdocs/screenshot-1602033248-25.png
+.. image:: docs/screenshot-1602033248-25.png
    :alt: Screenshot of Spots in ATAK-Div Developer Edition.
    :target: docs/screenshot-1602033248.png
 
