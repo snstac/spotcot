@@ -1,0 +1,6 @@
+# Python Distribution Package Requirements for Spot Cursor-on-Target Gateway.
+#
+# Source:: https://github.com/ampledata/spotcot
+# Author:: Greg Albrecht W2GMD <oss@undef.net>
+# Copyright:: Copyright 2020 Orion Labs, Inc.
+# License:: Apache License, Version 2.0
