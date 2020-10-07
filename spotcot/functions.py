@@ -6,8 +6,9 @@
 import datetime
 
 import spot_sdk
-
 import pycot
+
+import spotcot.constants
 
 __author__ = 'Greg Albrecht W2GMD <oss@undef.net>'
 __copyright__ = 'Copyright 2020 Orion Labs, Inc.'
@@ -63,10 +64,11 @@ def create_spot_feed(api_key: str) -> spot_sdk.Feed:
     """Creates a Spot Message Feed."""
     return spot_sdk.Feed(api_key)
 
-def get_first_message(spot_feed):
+
+def get_first_message(spot_feed: spot_sdk.Feed) -> spot_sdk.Message:
     """Gets the first Message from a Spot Feed."""
     first_message = spot_feed.first()
-    assert type(first_message) == spot_sdk.Message
+    assert isinstance(first_message, spot_sdk.Message)
     return first_message
 
 
@@ -76,6 +78,5 @@ def get_full_addr(cot_host: str) -> tuple:
         addr, port = cot_host.split(':')
     else:
         addr = cot_host
-        port = spotcot.DEFAULT_COT_PORT
+        port = spotcot.constants.DEFAULT_COT_PORT
     return addr, int(port)
-

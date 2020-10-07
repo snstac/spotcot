@@ -70,17 +70,19 @@ TEST_RESPONSE = {
     }
 }
 
+
 class FunctionsTestCase(unittest.TestCase):
     """
     Tests for Functions.
     """
 
-    def test_spot_sdk_Message(self):
+    def test_spot_sdk_message(self):
         """
-        Tests taht spot_sdk's Message Object imports our JSON Test Message.
+        Tests that spot_sdk's Message Object imports our JSON Test Message.
         :return:
         """
-        first_message = TEST_RESPONSE['response']['feedMessageResponse']['messages']['message'][0]
+        first_message = TEST_RESPONSE[
+            'response']['feedMessageResponse']['messages']['message'][0]
         spot_sdk_msg = spot_sdk.Message(first_message)
         self.assertEqual(type(spot_sdk_msg), spot_sdk.Message)
         print(spot_sdk_msg)
@@ -89,13 +91,14 @@ class FunctionsTestCase(unittest.TestCase):
         """
         Tests that spot_to_cot converts Spot Messages to CoT Events.
         """
-        first_message = TEST_RESPONSE['response']['feedMessageResponse']['messages']['message'][0]
-        spot_name = TEST_RESPONSE['response']['feedMessageResponse']['feed']['name']
-        print(first_message)
-        cot_event = spotcot.functions.spot_to_cot(spot_name, first_message)
+        response = TEST_RESPONSE['response']
+        raw_messages = response['feedMessageResponse']['messages']['message']
+        messages = [spot_sdk.Message(x) for x in raw_messages]
+        first_message = messages[0]
+        cot_event = spotcot.functions.spot_to_cot(first_message)
         print(cot_event)
         self.assertEqual(cot_event.event_type, 'a-f-G-E-V-C')
-        self.assertEqual(cot_event.uid, 'Spot.spotcot')
+        self.assertEqual(cot_event.uid, 'Spot.gba Spot Gen 3')
 
 
 if __name__ == '__main__':

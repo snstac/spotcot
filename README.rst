@@ -13,8 +13,7 @@ Can be used to display Spot device PLI in tools such as ATAK, WinTAK &
 RaptorX. See https://www.civtak.org/
 
 Requires Spot device
-Requires the XML Feed Feature of the Spot service. See
- https://login.findmespot.com/spot-main-web/myaccount/xmlfeed/create.html
+Requires the XML Feed Feature of the Spot service. See https://login.findmespot.com/spot-main-web/myaccount/xmlfeed/create.html
 
 Installation
 ============

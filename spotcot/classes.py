@@ -5,10 +5,11 @@
 
 import logging
 import socket
-import sys
 import threading
 import time
 import typing
+
+import spot_sdk
 
 import spotcot
 
@@ -54,11 +55,11 @@ class SpotCoT(threading.Thread):
             try:
                 spot_feed.collect()
             except spot_sdk.SpotSDKError as exc:
-                self._logger.warn(
-                    'spot_sdk.collect() threw an Exception (ignored): ')
+                self._logger.warning(
+                    "spot_sdk's collect() threw an Exception (ignored): ")
                 self._logger.exception(exc)
 
-            if spot_feed.count() > 0 and spot_feed.messages is not []:
+            if spot_feed.count() and spot_feed.messages:
                 self.send_cot(spot_feed)
 
             self._logger.debug('Sleeping for %s seconds...', self.interval)
@@ -66,19 +67,19 @@ class SpotCoT(threading.Thread):
 
     def send_cot(self, spot_feed):
         """Sends an Spot message in CoT format to a remote host using UDP."""
-        first_message: Object = spotcot.get_first_message(spot_feed)
+        first_message: object = spotcot.get_first_message(spot_feed)
 
         self._logger.debug('First Spot Message: ')
         self._logger.debug(first_message)
 
-        cot_event: Object = spotcot.spot_to_cot(first_message)
+        cot_event: object = spotcot.spot_to_cot(first_message)
         if cot_event is None:
-            return
+            return None
 
         rendered_event: str = cot_event.render(
             encoding='UTF-8', standalone=True)
         if rendered_event is None:
-            return
+            return None
 
         self._logger.debug(
             'Sending %s char CoT Event to %s: ',
@@ -92,8 +93,8 @@ class SpotCoT(threading.Thread):
 
         try:
             return cot_socket.sendto(rendered_event, self.full_addr)
-        except sys.audit as exc:
+        except Exception as exc:
             self._logger.debug(
                 'Sending CoT Event raised an Exception (ignored): ')
             self._logger.exception(exc)
-            return
+            return None
