@@ -13,7 +13,7 @@ import sys
 import setuptools
 
 __title__ = 'spotcot'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __author__ = 'Greg Albrecht W2GMD <oss@undef.net>'
 __copyright__ = 'Copyright 2020 Orion Labs, Inc.'
 __license__ = 'Apache License, Version 2.0'
@@ -44,7 +44,7 @@ setuptools.setup(
     url='https://github.com/ampledata/spotcot',
     zip_safe=False,
     include_package_data=True,
-    setup_requires=[
+    tests_requires=[
         'coverage >= 3.7.1',
         'pytest'
     ],
