@@ -31,8 +31,9 @@ class SpotCoT(threading.Thread):
         _logger.addHandler(_console_handler)
         _logger.propagate = False
 
-    def __init__(self, api_key: str, cot_host: str, interval: typing.Any) -> None:  # NOQA
+    def __init__(self, api_key: str, password: str, cot_host: str, interval: typing.Any) -> None:  # NOQA
         self.api_key = api_key
+        self.password = password
         self.cot_host = cot_host
         self.interval = interval or spotcot.QUERY_INTERVAL
         self.full_addr = spotcot.get_full_addr(cot_host)
@@ -48,7 +49,7 @@ class SpotCoT(threading.Thread):
 
     def run(self) -> None:
         """Starts a SpotCoT Thread."""
-        spot_feed = spotcot.create_spot_feed(self.api_key)
+        spot_feed = spotcot.create_spot_feed(self.api_key, self.password)
         self._logger.info("SpotCoT running against CoT Host %s", self.cot_host)
 
         while 1:
