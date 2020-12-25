@@ -89,8 +89,15 @@ class SpotCoT(threading.Thread):
         )
         self._logger.debug(rendered_event)
 
-        cot_socket: socket.socket = socket.socket(
-            socket.AF_INET, socket.SOCK_DGRAM)
+        MULTICAST_TTL = 5
+        #to avoid dependencies, very low level cheching if address is multicast. Should be done with re.
+        firstbyte = str(self.full_addr)[2:5]
+        print(firstbyte)
+        if firstbyte.isnumeric() and int(firstbyte) > 223 and int(firstbyte) < 240:
+            cot_socket  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            cot_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
+        else:
+            cot_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         try:
             return cot_socket.sendto(rendered_event, self.full_addr)
