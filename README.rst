@@ -45,12 +45,14 @@ Usage
 The `spotcot` daemon has several runtime arguments::
 
     $ spotcot -h
-    usage: spotcot [-h] -k API_KEY [-i INTERVAL] -C COT_HOST
+    usage: spotcot [-h] -k API_KEY [-p PASSWORD] [-i INTERVAL] -C COT_HOST
 
     optional arguments:
       -h, --help            show this help message and exit
       -k API_KEY, --api_key API_KEY
                             Spot API Key ("XML Feed Id")
+      -p PASSWORD, --password PASSWORD
+                            Spot API Password ("XML Feed Password")
       -i INTERVAL, --interval INTERVAL
                             Spot API Query Interval
       -C COT_HOST, --cot_host COT_HOST

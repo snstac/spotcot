@@ -21,6 +21,9 @@ def cli():
         '-k', '--api_key', help='Spot API Key ("XML Feed Id")', required=True
     )
     parser.add_argument(
+        '-p', '--password', help='Spot Feed Password for private feeds.', default=None
+    )
+    parser.add_argument(
         '-i', '--interval', help='Spot API Query Interval', default=600
     )
     parser.add_argument(
@@ -29,7 +32,7 @@ def cli():
     )
     opts = parser.parse_args()
 
-    spotcot_i = spotcot.SpotCoT(opts.api_key, opts.cot_host, opts.interval)
+    spotcot_i = spotcot.SpotCoT(opts.api_key, opts.password, opts.cot_host, opts.interval)
 
     try:
         spotcot_i.start()

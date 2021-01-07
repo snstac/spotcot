@@ -60,9 +60,12 @@ def spot_to_cot(message: spot_sdk.Message) -> pycot.Event:
     return event
 
 
-def create_spot_feed(api_key: str) -> spot_sdk.Feed:
+def create_spot_feed(api_key: str, password: str) -> spot_sdk.Feed:
     """Creates a Spot Message Feed."""
-    return spot_sdk.Feed(api_key)
+    if not isinstance(password, str):
+        return spot_sdk.Feed(api_key)
+    else:
+        return spot_sdk.Feed(api_key, password)
 
 
 def get_first_message(spot_feed: spot_sdk.Feed) -> spot_sdk.Message:
