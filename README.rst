@@ -8,11 +8,11 @@ spotcot - Spot Cursor-on-Target Gateway.
 The ``spotcot`` Spot Cursor-on-Target Gateway transforms Spot position messages
 into Cursor on Target (CoT) Position Location Information (PLI) Points for
 display on Situational Awareness (SA) applications such as the Android Team
-Awareness Kit (ATAK), WinTAK, RaptorX, et al.
-
+Awareness Kit (ATAK), WinTAK, RaptorX, et al. This allows partner agencies to
+track affiliated units without exposing existing networks, amongst other uses.
 
 ``spotcot`` can be run as a foreground command line application, or can be run
-as a background service using a daemon like supervisord.
+as a background service using a daemon like `supervisor <http://supervisord.org/>`_.
 
 Usage of this gateway requires a `Spot <https://www.findmespot.com/en-us/>`_ device with service.
 
@@ -33,14 +33,16 @@ To install from PyPI::
 Setup
 =====
 
-``spotcot`` uses the Spot "XML Feed" feature to retrieve Spot location messages
-from the Spot API. To enable the "XML Feed" feature:
+``spotcot`` uses the Spot **XML Feed** feature to retrieve Spot location
+messages from the Spot API.
+
+To enable the **XML Feed** feature:
 
 1. Login to your Spot account at: https://login.findmespot.com/spot-main-web/auth/login.html
-2. In the navigation bar, click "XML Feed", then "Create XML Feed".
-3. Enter any value for "XML Feed Name".
-4. [optional] If you select "Make XML page private", chose and record a password.
-5. Click "Create", record the "XML Feed ID".
+2. In the navigation bar, click **XML Feed**, then **Create XML Feed**.
+3. Enter any value for **XML Feed Name**.
+4. *[Optional]* If you select **Make XML page private**, chose and record a password.
+5. Click **Create**, record the **XML Feed ID**.
 
 Usage
 =====
@@ -56,15 +58,15 @@ The `spotcot` daemon has several runtime arguments::
       -U COT_URL, --cot_url COT_URL
                             URL to CoT Destination.
       -S COT_STALE, --cot_stale COT_STALE
-                            CoT Stale period, in seconds
+                            CoT Stale period, in seconds.
       -k API_KEY, --api_key API_KEY
-                            Spot API Key ("XML Feed Id")
+                            Spot API Key ("XML Feed Id").
       -i INTERVAL, --interval INTERVAL
-                            Spot API Query Interval
+                            Spot API Query Interval.
       -p PASSWORD, --password PASSWORD
                             Spot Feed Password for private feeds.
-                            
-For minimum operation, `-k API_KEY` & `-C COT_HOST` are required.
+
+For minimum operation, `-k API_KEY` & `-U COT_HOST` are required.
 
 Source
 ======

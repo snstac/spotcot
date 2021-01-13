@@ -69,10 +69,10 @@ def cli():
     )
 
     parser.add_argument(
-        '-k', '--api_key', help='Spot API Key ("XML Feed Id")', required=True
+        '-k', '--api_key', help='Spot API Key ("XML Feed Id").', required=True
     )
     parser.add_argument(
-        '-i', '--interval', help='Spot API Query Interval', default=600
+        '-i', '--interval', help='Spot API Query Interval.', default=600
     )
     parser.add_argument(
         '-p', '--password', help='Spot Feed Password for private feeds.'
