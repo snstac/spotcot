@@ -16,6 +16,8 @@ as a background service using a daemon like `supervisor <http://supervisord.org/
 
 Usage of this gateway requires a `Spot <https://www.findmespot.com/en-us/>`_ device with service.
 
+IF YOU HAVE AN URGENT OPERATIONAL NEED: Email ops@undef.net or call/sms +1-415-598-8226
+
 Installation
 ============
 
