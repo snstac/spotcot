@@ -48,17 +48,22 @@ Usage
 The `spotcot` daemon has several runtime arguments::
 
     $ spotcot -h
-    usage: spotcot [-h] -k API_KEY [-i INTERVAL] -C COT_HOST
+    usage: spotcot [-h] -U COT_URL [-S COT_STALE] -k API_KEY [-i INTERVAL]
+                   [-p PASSWORD]
 
     optional arguments:
       -h, --help            show this help message and exit
+      -U COT_URL, --cot_url COT_URL
+                            URL to CoT Destination.
+      -S COT_STALE, --cot_stale COT_STALE
+                            CoT Stale period, in seconds
       -k API_KEY, --api_key API_KEY
                             Spot API Key ("XML Feed Id")
       -i INTERVAL, --interval INTERVAL
                             Spot API Query Interval
-      -C COT_HOST, --cot_host COT_HOST
-                            Cursor-on-Target Host or Host:Port
-
+      -p PASSWORD, --password PASSWORD
+                            Spot Feed Password for private feeds.
+                            
 For minimum operation, `-k API_KEY` & `-C COT_HOST` are required.
 
 Source
