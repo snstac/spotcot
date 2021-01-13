@@ -1,82 +1,103 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """Spot Cursor-on-Target Gateway Functions."""
 
 import datetime
 
-import spot_sdk
 import pycot
 
 import spotcot.constants
 
-__author__ = 'Greg Albrecht W2GMD <oss@undef.net>'
-__copyright__ = 'Copyright 2020 Orion Labs, Inc.'
-__license__ = 'Apache License, Version 2.0'
+__author__ = "Greg Albrecht W2GMD <oss@undef.net>"
+__copyright__ = "Copyright 2021 Orion Labs, Inc."
+__license__ = "Apache License, Version 2.0"
 
 
-def spot_to_cot(message: spot_sdk.Message) -> pycot.Event:
+def spot_to_cot(response, stale: int = None) -> pycot.Event:
     """
-    Converts an Spot Message to a Cursor-on-Target Event.
-
-    :param message: Spot Message to convert to CoT.
-    :type message: `spot_sdk.Message`
+    Converts an Spot Response to a Cursor-on-Target Event.
     """
-    time = datetime.datetime.now()
+    message = response["feedMessageResponse"]["messages"]["message"][0]
 
-    lat = message.__getattribute__('latitude')
-    lon = message.__getattribute__('longitude')
+#    time = datetime.datetime.now(datetime.timezone.utc)
+    time = datetime.datetime.fromtimestamp(message["unixTime"])
+    stale = stale or spotcot.DEFAULT_STALE
+
+    lat = message.get("latitude")
+    lon = message.get("longitude")
 
     if lat is None or lon is None:
         return None
 
-    print(message.raw)
-    name = message.raw.get('messengerName')
+    cot_type = "a-.-G-E-V-C"
+    name = message.get("messengerName")
+    callsign = name
 
     point = pycot.Point()
     point.lat = lat
     point.lon = lon
-    point.ce = '10'
-    point.le = '10'
-    point.hae = '10'
+    point.ce = "9999999.0"
+    point.le = "9999999.0"
+    point.hae = "9999999.0"
 
     uid = pycot.UID()
     uid.Droid = name
 
+    contact = pycot.Contact()
+    contact.callsign = callsign
+
+    remarks = pycot.Remarks()
+    _remarks = (
+        f"batteryState: {message.get('batteryState')} "
+        f"messengerId: {message.get('messengerId')} "
+        f"modelId: {message.get('modelId')}"
+    )
+    remarks.value = _remarks
+
+
     detail = pycot.Detail()
     detail.uid = uid
+    detail.contact = contact
+    detail.remarks = remarks
 
     event = pycot.Event()
-    event.version = '2.0'
-    event.event_type = 'a-f-G-E-V-C'
+    event.version = "2.0"
+    event.event_type = cot_type
     event.uid = f"Spot.{name}"
     event.time = time
     event.start = time
-    event.stale = time + + datetime.timedelta(hours=1)  # 1 hour expire
-    event.how = 'h-e'
+    event.stale = time + datetime.timedelta(seconds=stale)
+    event.how = "m-g"
     event.point = point
     event.detail = detail
 
     return event
 
 
-def create_spot_feed(api_key: str) -> spot_sdk.Feed:
-    """Creates a Spot Message Feed."""
-    return spot_sdk.Feed(api_key)
+def hello_event():
+    time = datetime.datetime.now(datetime.timezone.utc)
+    name = 'spotcot'
+    callsign = 'spotcot'
 
+    uid = pycot.UID()
+    uid.Droid = name
 
-def get_first_message(spot_feed: spot_sdk.Feed) -> spot_sdk.Message:
-    """Gets the first Message from a Spot Feed."""
-    first_message = spot_feed.first()
-    assert isinstance(first_message, spot_sdk.Message)
-    return first_message
+    contact = pycot.Contact()
+    contact.callsign = callsign
 
+    detail = pycot.Detail()
+    detail.uid = uid
+    detail.contact = contact
 
-def get_full_addr(cot_host: str) -> tuple:
-    """Gets the Socket Address for the CoT Destination Host."""
-    if ':' in cot_host:
-        addr, port = cot_host.split(':')
-    else:
-        addr = cot_host
-        port = spotcot.constants.DEFAULT_COT_PORT
-    return addr, int(port)
+    event = pycot.Event()
+    event.version = '2.0'
+    event.event_type = 'a-u-G'
+    event.uid = name
+    event.time = time
+    event.start = time
+    event.stale = time + datetime.timedelta(hours=1)
+    event.how = 'h-g-i-g-o'
+    event.detail = detail
+
+    return event

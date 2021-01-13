@@ -1,100 +1,79 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """Spot Cursor-on-Target Class Definitions."""
 
+import aiohttp
+import asyncio
+import json
 import logging
-import socket
-import threading
 import time
 import typing
 
-import spot_sdk
+import pycot
+import pytak
 
 import spotcot
 
-__author__ = 'Greg Albrecht W2GMD <oss@undef.net>'
-__copyright__ = 'Copyright 2020 Orion Labs, Inc.'
-__license__ = 'Apache License, Version 2.0'
+__author__ = "Greg Albrecht W2GMD <oss@undef.net>"
+__copyright__ = "Copyright 2021 Orion Labs, Inc."
+__license__ = "Apache License, Version 2.0"
 
 
-class SpotCoT(threading.Thread):
+class SpotWorker(pytak.MessageWorker):
 
-    """Spot Cursor-on-Target Threaded Class."""
+    """Reads Spot Data, renders to CoT, and puts on queue."""
 
-    _logger = logging.getLogger(__name__)
-    if not _logger.handlers:
-        _logger.setLevel(spotcot.LOG_LEVEL)
-        _console_handler = logging.StreamHandler()
-        _console_handler.setLevel(spotcot.LOG_LEVEL)
-        _console_handler.setFormatter(spotcot.LOG_FORMAT)
-        _logger.addHandler(_console_handler)
-        _logger.propagate = False
-
-    def __init__(self, api_key: str, cot_host: str, interval: typing.Any) -> None:  # NOQA
+    def __init__(self, event_queue: asyncio.Queue, api_key: str,
+                 cot_stale: int = None, poll_interval: int = None,
+                 password: int = None):
+        super().__init__(event_queue)
         self.api_key = api_key
-        self.cot_host = cot_host
-        self.interval = interval or spotcot.QUERY_INTERVAL
-        self.full_addr = spotcot.get_full_addr(cot_host)
+        self.cot_stale = cot_stale
+        self.poll_interval: int = int(poll_interval or
+                                      adsbxcot.DEFAULT_POLL_INTERVAL)
+        self.spot_url: str = (
+            f"{spotcot.SPOT_BASE_URL}{self.api_key}/message.json")
 
-        # Thread Management:
-        threading.Thread.__init__(self)
-        self._stopped = False
+        if password:
+            self.params = {"feedPassword": password}
+        else:
+            self.params = {}
 
-    def stop(self) -> bool:
-        """Stops a SpotCot Thread (at the next opportunity)."""
-        self._stopped = True
-        return self._stopped
+        # Used by spot_to_cot function:
+        self.cot_renderer = spotcot.spot_to_cot
+        self.cot_classifier = pytak.faa_to_cot_type
 
-    def run(self) -> None:
-        """Starts a SpotCoT Thread."""
-        spot_feed = spotcot.create_spot_feed(self.api_key)
-        self._logger.info("SpotCoT running against CoT Host %s", self.cot_host)
+    async def handle_response(self, response: list) -> None:
+        """Handles the response from the Spot API."""
+        event: pycot.Event = spotcot.spot_to_cot(response)
+        if event:
+            await self._put_event_queue(event)
+        else:
+            self._logger.debug("Empty CoT Event for response='%s'", response)
+
+    async def _get_spot_feed(self):
+        """Gets Spot Feed from API."""
+        self._logger.debug("Polling Spot API")
+        async with aiohttp.ClientSession() as session:
+            response = await session.request(
+                method="GET",
+                url=self.spot_url,
+                params=self.params
+            )
+            json_resp = await response.json()
+            _response = json_resp.get("response")
+
+            if "errors" in _response:
+                self._logger.error("Error from Spot API: '%s'", _response)
+            else:
+                await self.handle_response(_response)
+
+    async def run(self) -> None:
+        """Runs this Worker, Reads from Pollers."""
+        self._logger.info(
+            "Running SpotWorker with Spot API URL: %s", self.spot_url)
 
         while 1:
-            try:
-                spot_feed.collect()
-            except spot_sdk.SpotSDKError as exc:
-                self._logger.warning(
-                    "spot_sdk's collect() threw an Exception (ignored): ")
-                self._logger.exception(exc)
-
-            if spot_feed.count() and spot_feed.messages:
-                self.send_cot(spot_feed)
-
-            self._logger.debug('Sleeping for %s seconds...', self.interval)
-            time.sleep(self.interval)
-
-    def send_cot(self, spot_feed):
-        """Sends an Spot message in CoT format to a remote host using UDP."""
-        first_message: object = spotcot.get_first_message(spot_feed)
-
-        self._logger.debug('First Spot Message: ')
-        self._logger.debug(first_message)
-
-        cot_event: object = spotcot.spot_to_cot(first_message)
-        if cot_event is None:
-            return None
-
-        rendered_event: str = cot_event.render(
-            encoding='UTF-8', standalone=True)
-        if rendered_event is None:
-            return None
-
-        self._logger.debug(
-            'Sending %s char CoT Event to %s: ',
-            len(rendered_event),
-            self.full_addr
-        )
-        self._logger.debug(rendered_event)
-
-        cot_socket: socket.socket = socket.socket(
-            socket.AF_INET, socket.SOCK_DGRAM)
-
-        try:
-            return cot_socket.sendto(rendered_event, self.full_addr)
-        except Exception as exc:
-            self._logger.debug(
-                'Sending CoT Event raised an Exception (ignored): ')
-            self._logger.exception(exc)
-            return None
+            await self._get_spot_feed()
+            await asyncio.sleep(self.poll_interval)
