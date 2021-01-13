@@ -1,9 +1,9 @@
 spotcot - Spot Cursor-on-Target Gateway.
 ****************************************
 
-.. image:: docs/Screen Shot 2021-01-12 at 10.49.08 AM.png
+.. image:: docs/ScreenShot2021-01-12at10.49.08AM.png
    :alt: Screenshot of Spot CoT PLI Point in ATAK
-   :target: docs/Screen Shot 2021-01-12 at 10.49.08 AM.png
+   :target: docs/ScreenShot2021-01-12at10.49.08AM.png
 
 The ``spotcot`` Spot Cursor-on-Target Gateway transforms Spot position messages
 into Cursor on Target (CoT) Position Location Information (PLI) Points for
