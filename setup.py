@@ -16,7 +16,7 @@ import sys
 import setuptools
 
 __title__ = "spotcot"
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __author__ = "Greg Albrecht W2GMD <oss@undef.net>"
 __copyright__ = "Copyright 2021 Orion Labs, Inc."
 __license__ = "Apache License, Version 2.0"
@@ -49,7 +49,8 @@ setuptools.setup(
     include_package_data=True,
     install_requires=[
         "pycot >= 2.5.0",
-        "pytak >= 3.0.0"
+        "pytak >= 3.0.0",
+        "aiohttp"
     ],
     classifiers=[
         "Programming Language :: Python",

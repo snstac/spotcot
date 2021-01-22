@@ -18,6 +18,22 @@ Usage of this gateway requires a `Spot <https://www.findmespot.com/en-us/>`_ dev
 
 IF YOU HAVE AN URGENT OPERATIONAL NEED: Email ops@undef.net or call/sms +1-415-598-8226
 
+Wildland Firefighting
+=====================
+``spotcot`` may also be of use in wildland firefighting, see Section 1114.d of the `Dingell Act <https://www.congress.gov/bill/116th-congress/senate-bill/47/text>`_::
+
+    Location Systems for Wildland Firefighters.--
+    (1) In general.--Not later than 2 years after the date of
+        enactment of this Act, subject to the availability of
+        appropriations, the Secretaries, in coordination with State
+        wildland firefighting agencies, shall jointly develop and
+        operate a tracking system (referred to in this subsection as the
+        ``system'') to remotely locate the positions of fire resources
+        for use by wildland firefighters, including, at a minimum, any
+        fire resources assigned to Federal type 1 wildland fire incident
+        management teams.
+
+
 Installation
 ============
 
