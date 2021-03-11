@@ -1,0 +1,5 @@
+bundle_id: org.ampledata.spotcot
+categories:
+- Utility
+entrypoint: spotcot.commands:cli
+name: spotcot
