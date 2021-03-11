@@ -1,0 +1,94 @@
+
+name: Continuous
+on: 
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+
+
+jobs:
+  Wheel:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.x
+
+    - name: Build wheel
+      run: |
+        python -m pip install wheel twine
+        python setup.py bdist_wheel
+        export VERSION=$(ls dist)
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: spotcot-continuous-none-any-py3.whl
+        path: dist/${{ env.VERSION }}
+
+  AppImage:
+    runs-on: ubuntu-latest
+    container:
+      image: 'ubuntu:16.04'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup up User
+        run: |
+          apt update
+          apt install -y sudo
+          echo "github ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          useradd -m github
+          usermod -aG sudo github
+          su - github
+      
+      - name: Install Build AppImage
+        run: |
+          bash -ex scripts/ci-ubuntu1604-build_appimage.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: spotcot-continuous-x86_64.AppImage
+          path: spotcot-x86_64.AppImage
+
+
+ 
+  Release:
+    needs: [AppImage, Wheel]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v2
+
+    - name: PreRelease
+      uses: marvinpinto/action-automatic-releases@latest
+      if: github.ref == 'refs/heads/master' && startsWith(github.ref, 'refs/tags/') != true
+      with:
+        prerelease: true
+        draft: false
+        automatic_release_tag: continuous
+        title: continuous
+        files: |
+          spotcot-continuous-x86_64.AppImage
+          spotcot-continuous-none-any-py3.whl
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Release
+      uses: marvinpinto/action-automatic-releases@latest
+      if: startsWith(github.ref, 'refs/tags/v')
+      with:
+        prerelease: false
+        draft: true
+        files: |
+          spotcot-continuous-x86_64.AppImage
+          spotcot-continuous-none-any-py3.whl
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
