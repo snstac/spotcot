@@ -22,7 +22,7 @@ python$PYTHON_VERSION get-pip.py
 mv `which python$PYTHON_VERSION` `which python3`
 
 # install some runtime dependencies 
-sudo apt install -y libtool libcairo-dev libxcb-xinerama0 build-essential
+sudo apt install -y libtool libcairo-dev libxcb-xinerama0 build-essential libsdl2-dev
 
 # clone pyappimage and install it
 git clone https://github.com/srevinsaju/pyappimage.git --depth=1 pyapim && cd pyapim
@@ -33,6 +33,8 @@ cd ..
 echo "$(git describe --tags --always --match '*[0-9]*')"
 
 # build the appimage
+python3 -m pip install -r requirements.txt
+python3 -m pip install .
 python3 -m pyappimage.cli build
 
  
