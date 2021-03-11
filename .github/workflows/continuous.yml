@@ -53,7 +53,7 @@ jobs:
       
       - name: Install Build AppImage
         run: |
-          bash -ex scripts/ci-ubuntu1604-build_appimage.sh
+          PYTHON_VERSION=3.8 bash -ex scripts/ci-ubuntu1604-build_appimage.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v1.0.0
