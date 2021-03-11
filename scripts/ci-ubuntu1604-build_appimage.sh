@@ -41,6 +41,6 @@ export APPIMAGE_EXTRACT_AND_RUN=1
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x appimagetool-x86_64.AppImage
 VERSION="$(git describe --tags --always --match '*[0-9]*')" ./appimagetool*.AppImage \
-    squashfs-root -n \
+    spotcot.AppDir -n \
     -u 'gh-releases-zsync|ampledata|spotcot|continuous|spotcot-*.AppImage.zsync' \
     spotcot-$(uname -m).AppImage
