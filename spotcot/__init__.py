@@ -13,10 +13,10 @@ Spot to Cursor-on-Target Gateway.
 :source: <https://github.com/ampledata/spotcot>
 """
 
-from .constants import (LOG_FORMAT, LOG_LEVEL, QUERY_INTERVAL,  # NOQA
-                        SPOT_BASE_URL, DEFAULT_STALE)
+from .constants import (LOG_FORMAT, LOG_LEVEL, DEFAULT_POLL_INTERVAL,  # NOQA
+                        SPOT_BASE_URL, DEFAULT_COT_STALE, DEFAULT_COT_TYPE)
 
-from .functions import spot_to_cot, hello_event  # NOQA
+from .functions import spot_to_cot  # NOQA
 
 from .classes import SpotWorker  # NOQA
 

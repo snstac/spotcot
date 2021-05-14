@@ -4,8 +4,12 @@
 """Spot Cursor-on-Target Gateway Functions."""
 
 import datetime
+import os
+import platform
 
-import pycot
+import xml.etree.ElementTree
+
+import pytak
 
 import spotcot.constants
 
@@ -14,90 +18,75 @@ __copyright__ = "Copyright 2021 Orion Labs, Inc."
 __license__ = "Apache License, Version 2.0"
 
 
-def spot_to_cot(response, stale: int = None) -> pycot.Event:
+def spot_to_cot(response, cot_stale: int = None, cot_type: str = None) -> str:
     """
     Converts an Spot Response to a Cursor-on-Target Event.
     """
     message = response["feedMessageResponse"]["messages"]["message"][0]
 
-#    time = datetime.datetime.now(datetime.timezone.utc)
-    time = datetime.datetime.fromtimestamp(message["unixTime"])
-    stale = stale or spotcot.DEFAULT_STALE
-
     lat = message.get("latitude")
     lon = message.get("longitude")
-
     if lat is None or lon is None:
         return None
 
-    cot_type = "a-.-G-E-V-C"
+    #   time = datetime.datetime.now(datetime.timezone.utc)
+    time = datetime.datetime.fromtimestamp(message["unixTime"])
+
+    # We want to use localtime + stale instead of lastUpdate time + stale
+    # This means a device could go offline and we might not know it?
+    _cot_stale = int(cot_stale or spotcot.DEFAULT_COT_STALE)
+    cot_stale = (datetime.datetime.now(datetime.timezone.utc) + \
+                datetime.timedelta(seconds=_cot_stale)).strftime(pytak.ISO_8601_UTC)
+
+    cot_type = cot_type or spotcot.DEFAULT_COT_TYPE
+
     name = message.get("messengerName")
     callsign = name
 
-    point = pycot.Point()
-    point.lat = lat
-    point.lon = lon
-    point.ce = "9999999.0"
-    point.le = "9999999.0"
-    point.hae = "9999999.0"
+    point = xml.etree.ElementTree.Element("point")
+    point.set("lat", str(lat))
+    point.set("lon", str(lon))
+    point.set("hae", "9999999.0")
+    point.set("ce", "9999999.0")
+    point.set("le", "9999999.0")
 
-    uid = pycot.UID()
-    uid.Droid = name
+    uid = xml.etree.ElementTree.Element("UID")
+    uid.set("Droid", name)
 
-    contact = pycot.Contact()
-    contact.callsign = callsign
+    contact = xml.etree.ElementTree.Element("contact")
+    contact.set("callsign", str(callsign))
 
-    remarks = pycot.Remarks()
+    track = xml.etree.ElementTree.Element("track")
+    track.set("course", "9999999.0")
+
+    detail = xml.etree.ElementTree.Element("detail")
+    detail.set("uid", name)
+    detail.append(uid)
+    detail.append(contact)
+    detail.append(track)
+
+    remarks = xml.etree.ElementTree.Element("remarks")
+
     _remarks = (
         f"batteryState: {message.get('batteryState')} "
         f"messengerId: {message.get('messengerId')} "
-        f"modelId: {message.get('modelId')}"
+        f"modelId: {message.get('modelId')} "
+        f"(via spotcot@{platform.node()})"
     )
-    remarks.value = _remarks
 
+    detail.set("remarks", _remarks)
+    remarks.text = _remarks
+    detail.append(remarks)
 
-    detail = pycot.Detail()
-    detail.uid = uid
-    detail.contact = contact
-    detail.remarks = remarks
+    root = xml.etree.ElementTree.Element("event")
+    root.set("version", "2.0")
+    root.set("type", cot_type)
+    root.set("uid", f"Spot-{name}")
+    root.set("how", "m-g")
+    root.set("time", time.strftime(pytak.ISO_8601_UTC))
+    root.set("start", time.strftime(pytak.ISO_8601_UTC))
+    root.set("stale", cot_stale)
+    root.append(point)
+    root.append(detail)
 
-    event = pycot.Event()
-    event.version = "2.0"
-    event.event_type = cot_type
-    event.uid = f"Spot.{name}"
-    event.time = time
-    event.start = time
-    event.stale = time + datetime.timedelta(seconds=stale)
-    event.how = "m-g"
-    event.point = point
-    event.detail = detail
-
-    return event
-
-
-def hello_event():
-    time = datetime.datetime.now(datetime.timezone.utc)
-    name = 'spotcot'
-    callsign = 'spotcot'
-
-    uid = pycot.UID()
-    uid.Droid = name
-
-    contact = pycot.Contact()
-    contact.callsign = callsign
-
-    detail = pycot.Detail()
-    detail.uid = uid
-    detail.contact = contact
-
-    event = pycot.Event()
-    event.version = '2.0'
-    event.event_type = 'a-u-G'
-    event.uid = name
-    event.time = time
-    event.start = time
-    event.stale = time + datetime.timedelta(hours=1)
-    event.how = 'h-g-i-g-o'
-    event.detail = detail
-
-    return event
+    return xml.etree.ElementTree.tostring(root)

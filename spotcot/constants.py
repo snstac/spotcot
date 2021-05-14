@@ -22,9 +22,10 @@ LOG_FORMAT = logging.Formatter(
      ' - %(message)s'))
 
 # How long between checking for new messages at the Spot API?
-QUERY_INTERVAL: int = 120
+DEFAULT_POLL_INTERVAL: int = 120
 
 # Base URL for Spot Feed
 SPOT_BASE_URL = "https://api.findmespot.com/spot-main-web/consumer/rest-api/2.0/public/feed/"
 
-DEFAULT_STALE: int = 120
+DEFAULT_COT_STALE: int = 600
+DEFAULT_COT_TYPE: str = "a-.-G-E-V-C"
