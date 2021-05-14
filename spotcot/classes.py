@@ -10,7 +10,6 @@ import logging
 import time
 import typing
 
-import pycot
 import pytak
 
 import spotcot
@@ -24,17 +23,20 @@ class SpotWorker(pytak.MessageWorker):
 
     """Reads Spot Data, renders to CoT, and puts on queue."""
 
-    def __init__(self, event_queue: asyncio.Queue, api_key: str,
-                 cot_stale: int = None, poll_interval: int = None,
-                 password: int = None):
+    def __init__(self, event_queue: asyncio.Queue, opts)
         super().__init__(event_queue)
-        self.api_key = api_key
-        self.cot_stale = cot_stale
-        self.poll_interval: int = int(poll_interval or
-                                      adsbxcot.DEFAULT_POLL_INTERVAL)
+        self.url: urllib.parse.ParseResult = urllib.parse.urlparse(opts.get("COT_URL"))
+
+        self.cot_stale = opts.get("COT_STALE")
+        self.cot_type = opts.get("COT_TYPE") or spotcot.DEFAULT_COT_TYPE
+
+        self.api_key = opts.get("API_KEY")
         self.spot_url: str = (
             f"{spotcot.SPOT_BASE_URL}{self.api_key}/message.json")
 
+        self.poll_interval: int = int(opts.get("POLL_INTERVAL") or spotcot.DEFAULT_POLL_INTERVAL)
+
+        password = opts.get("SPOT_PASSWORD")
         if password:
             self.params = {"feedPassword": password}
         else:
@@ -42,11 +44,10 @@ class SpotWorker(pytak.MessageWorker):
 
         # Used by spot_to_cot function:
         self.cot_renderer = spotcot.spot_to_cot
-        self.cot_classifier = pytak.faa_to_cot_type
 
     async def handle_response(self, response: list) -> None:
         """Handles the response from the Spot API."""
-        event: pycot.Event = spotcot.spot_to_cot(response)
+        event: str = spotcot.spot_to_cot(response, self.cot_stale, self.cot_type)
         if event:
             await self._put_event_queue(event)
         else:
@@ -55,19 +56,33 @@ class SpotWorker(pytak.MessageWorker):
     async def _get_spot_feed(self):
         """Gets Spot Feed from API."""
         self._logger.debug("Polling Spot API")
+
         async with aiohttp.ClientSession() as session:
-            response = await session.request(
-                method="GET",
-                url=self.spot_url,
-                params=self.params
-            )
-            json_resp = await response.json()
-            _response = json_resp.get("response")
+            try:
+                response = await session.request(
+                    method="GET",
+                    url=self.spot_url,
+                    params=self.params
+                )
+            except Exception as exc:
+                self._logger.error("Exception raised while accessing Spot API.")
+                self._logger.exception(exc)
+                return
+
+            try:
+                json_resp = await response.json()
+                _response = json_resp.get("response")
+            except Exception as exc:
+                self._logger.error("Exception raised while parsing Spot API data.")
+                self._logger.exception(exc)
+                return
 
             if "errors" in _response:
-                self._logger.error("Error from Spot API: '%s'", _response)
-            else:
+                self._logger.error("Received error response from Spot API: '%s'", _response)
+            elif _response:
                 await self.handle_response(_response)
+            else:
+                self._logger.error("No valid response from Spot API.")
 
     async def run(self) -> None:
         """Runs this Worker, Reads from Pollers."""
