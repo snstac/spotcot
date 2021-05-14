@@ -4,6 +4,12 @@
 """Spot Cursor-on-Target Gateway Functions."""
 
 import datetime
+import os
+import platform
+
+import xml.etree.ElementTree
+
+import pytak
 
 import spotcot.constants
 
@@ -29,7 +35,8 @@ def spot_to_cot(response, cot_stale: int = None, cot_type: str = None) -> str:
     # We want to use localtime + stale instead of lastUpdate time + stale
     # This means a device could go offline and we might not know it?
     _cot_stale = int(cot_stale or spotcot.DEFAULT_COT_STALE)
-    cot_stale = int(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=_cot_stale))
+    cot_stale = (datetime.datetime.now(datetime.timezone.utc) + \
+                datetime.timedelta(seconds=_cot_stale)).strftime(pytak.ISO_8601_UTC)
 
     cot_type = cot_type or spotcot.DEFAULT_COT_TYPE
 
@@ -39,9 +46,9 @@ def spot_to_cot(response, cot_stale: int = None, cot_type: str = None) -> str:
     point = xml.etree.ElementTree.Element("point")
     point.set("lat", str(lat))
     point.set("lon", str(lon))
-    point.set("hae", str(craft.get("nac_p", "9999999.0")))
-    point.set("ce", str(craft.get("nac_p", "9999999.0")))
-    point.set("le", str(craft.get("nac_v", "9999999.0")))
+    point.set("hae", "9999999.0")
+    point.set("ce", "9999999.0")
+    point.set("le", "9999999.0")
 
     uid = xml.etree.ElementTree.Element("UID")
     uid.set("Droid", name)
@@ -49,17 +56,22 @@ def spot_to_cot(response, cot_stale: int = None, cot_type: str = None) -> str:
     contact = xml.etree.ElementTree.Element("contact")
     contact.set("callsign", str(callsign))
 
+    track = xml.etree.ElementTree.Element("track")
+    track.set("course", "9999999.0")
+
     detail = xml.etree.ElementTree.Element("detail")
     detail.set("uid", name)
     detail.append(uid)
     detail.append(contact)
+    detail.append(track)
 
     remarks = xml.etree.ElementTree.Element("remarks")
 
     _remarks = (
         f"batteryState: {message.get('batteryState')} "
         f"messengerId: {message.get('messengerId')} "
-        f"modelId: {message.get('modelId')}"
+        f"modelId: {message.get('modelId')} "
+        f"(via spotcot@{platform.node()})"
     )
 
     detail.set("remarks", _remarks)
@@ -69,11 +81,11 @@ def spot_to_cot(response, cot_stale: int = None, cot_type: str = None) -> str:
     root = xml.etree.ElementTree.Element("event")
     root.set("version", "2.0")
     root.set("type", cot_type)
-    root.set("uid", f"Spot-{icao_hex}")
+    root.set("uid", f"Spot-{name}")
     root.set("how", "m-g")
-    root.set("time", time)
-    root.set("start", time)
-    root.set("stale", stale)
+    root.set("time", time.strftime(pytak.ISO_8601_UTC))
+    root.set("start", time.strftime(pytak.ISO_8601_UTC))
+    root.set("stale", cot_stale)
     root.append(point)
     root.append(detail)
 

@@ -9,6 +9,7 @@ import json
 import logging
 import time
 import typing
+import urllib
 
 import pytak
 
@@ -23,7 +24,7 @@ class SpotWorker(pytak.MessageWorker):
 
     """Reads Spot Data, renders to CoT, and puts on queue."""
 
-    def __init__(self, event_queue: asyncio.Queue, opts)
+    def __init__(self, event_queue: asyncio.Queue, opts) -> None:
         super().__init__(event_queue)
         self.url: urllib.parse.ParseResult = urllib.parse.urlparse(opts.get("COT_URL"))
 

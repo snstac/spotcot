@@ -8,6 +8,7 @@ import argparse
 import collections
 import concurrent
 import configparser
+import logging
 import os
 import sys
 import time
@@ -33,7 +34,7 @@ async def main(opts):
     loop = get_running_loop()
     tx_queue: asyncio.Queue = asyncio.Queue()
     rx_queue: asyncio.Queue = asyncio.Queue()
-    cot_url: urllib.parse.ParseResult = urllib.parse.urlparse(opts.cot_url)
+    cot_url: urllib.parse.ParseResult = urllib.parse.urlparse(opts.get("COT_URL"))
 
     # Create our CoT Event Queue Worker
     reader, writer = await pytak.protocol_factory(cot_url)
@@ -57,32 +58,69 @@ def cli():
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("-c", "--CONFIG_FILE", dest="CONFIG_FILE", default="config.ini", type=str)
     parser.add_argument(
-        '-U', '--cot_url', help='URL to CoT Destination.',
-        required=True
+        "-d", "--DEBUG", dest="DEBUG", default=False, action="store_true", help="Enable DEBUG logging")
+    parser.add_argument(
+        '-U',
+        '--COT_URL',
+        dest="COT_URL",
+        help='URL to CoT Destination. Must be a URL, e.g. tcp:1.2.3.4:1234 or tls:...:1234, etc.'
     )
     parser.add_argument(
-        '-S', '--cot_stale', help='CoT Stale period, in seconds',
+        '-S',
+        '--COT_STALE',
+        dest="COT_STALE",
+        help='CoT Stale period, in seconds',
+        default=spotcot.DEFAULT_COT_STALE
     )
+    parser.add_argument(
+        '-k', '--API_KEY', help='Spot API Key ("XML Feed Id").',
+    )
+    parser.add_argument(
+        '-i',
+        '--POLL_INTERVAL',
+        dest="POLL_INTERVAL",
+        help='Spot API Polling Interval.',
+        default=spotcot.DEFAULT_POLL_INTERVAL
+    )
+    parser.add_argument(
+        '-P',
+        '--SPOT_PASSWORD',
+        dest="SPOT_PASSWORD",
+        help='[Optional] Spot API Password for Private Feeds.'
+    )
+    namespace = parser.parse_args()
+    cli_args = {k: v for k, v in vars(namespace).items() if v is not None}
 
-    parser.add_argument(
-        '-k', '--api_key', help='Spot API Key ("XML Feed Id").', required=True
-    )
-    parser.add_argument(
-        '-i', '--interval', help='Spot API Query Interval.', default=600
-    )
-    parser.add_argument(
-        '-p', '--password', help='Spot Feed Password for private feeds.'
-    )
+    # Read config file:
+    config_file = cli_args.get("CONFIG_FILE")
+    logging.info("Reading configuration from %s", config_file)
+    config = configparser.ConfigParser()
+    config.read(config_file)
 
-    opts = parser.parse_args()
+    # Combined command-line args with config file:
+    if "spotcot" in config:
+        combined_config = collections.ChainMap(cli_args, os.environ, config["spotcot"])
+    else:
+        combined_config = collections.ChainMap(cli_args, os.environ)
+
+    if not combined_config.get("COT_URL"):
+        print("Please specify a CoT Destination URL, for example: '-U tcp:takserver.example.com:8087'")
+        print("See -h for help.")
+        sys.exit(1)
+
+    if not combined_config.get("API_KEY"):
+        print('Please specify a Spot API Key ("XML Feed Id")., for example: "-k 1234abc"')
+        print("See -h for help.")
+        sys.exit(1)
 
     if sys.version_info[:2] >= (3, 7):
-        asyncio.run(main(opts), debug=bool(os.getenv("DEBUG")))
+        asyncio.run(main(combined_config), debug=combined_config.get("DEBUG"))
     else:
         loop = get_event_loop()
         try:
-            loop.run_until_complete(main(opts))
+            loop.run_until_complete(main(combined_config))
         finally:
             loop.close()
 
